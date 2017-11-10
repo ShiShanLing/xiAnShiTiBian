@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="KGk-i7-Jjw" customClass="FootprintEmptyTVCell">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="375"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="KGk-i7-Jjw" id="H2p-sc-9uM">
+                <rect key="frame" x="0.0" y="0.0" width="375" height="375"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="wd-sxbq.png" translatesAutoresizingMaskIntoConstraints="NO" id="qa0-u7-SUw">
+                        <rect key="frame" x="135" y="76" width="105" height="121"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="121" id="2Kx-5j-7fi"/>
+                            <constraint firstAttribute="width" constant="105" id="Z7C-oz-JgN"/>
+                            <constraint firstAttribute="width" secondItem="qa0-u7-SUw" secondAttribute="height" multiplier="213:230" constant="-7.0565217391304316" id="dry-T7-C2V"/>
+                        </constraints>
+                    </imageView>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="okL-uK-J1K">
+                        <rect key="frame" x="73" y="212" width="229" height="30"/>
+                        <color key="backgroundColor" red="0.34362462162971497" green="0.75439220666885376" blue="0.57047414779663086" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="229" id="lX8-bo-4WU"/>
+                            <constraint firstAttribute="height" constant="30" id="mpv-ZI-gwi"/>
+                        </constraints>
+                        <state key="normal" title="未登录, 点击登录!">
+                            <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        </state>
+                        <connections>
+                            <action selector="handleStateBtn:" destination="KGk-i7-Jjw" eventType="touchUpInside" id="wBv-LC-R4l"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <color key="backgroundColor" red="0.96461421251296997" green="0.96477204561233521" blue="0.96458059549331665" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                <constraints>
+                    <constraint firstItem="qa0-u7-SUw" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="topMargin" constant="68" id="CLv-xl-6ap"/>
+                    <constraint firstItem="qa0-u7-SUw" firstAttribute="centerX" secondItem="H2p-sc-9uM" secondAttribute="centerX" id="s8f-jx-v63"/>
+                    <constraint firstItem="okL-uK-J1K" firstAttribute="centerX" secondItem="H2p-sc-9uM" secondAttribute="centerX" id="uGk-TF-P0S"/>
+                    <constraint firstItem="okL-uK-J1K" firstAttribute="top" secondItem="qa0-u7-SUw" secondAttribute="bottom" constant="15" id="xaX-JN-fxk"/>
+                </constraints>
+            </tableViewCellContentView>
+            <connections>
+                <outlet property="showImage" destination="qa0-u7-SUw" id="lMq-tV-hd6"/>
+                <outlet property="stateBtn" destination="okL-uK-J1K" id="iGG-pI-2uC"/>
+            </connections>
+            <point key="canvasLocation" x="-69.5" y="-18.5"/>
+        </tableViewCell>
+    </objects>
+    <resources>
+        <image name="wd-sxbq.png" width="140" height="140"/>
+    </resources>
+</document>

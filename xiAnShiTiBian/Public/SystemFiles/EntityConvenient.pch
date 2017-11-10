@@ -1,0 +1,147 @@
+//
+//  EntityConvenient.pch
+//  EntityConvenient
+//
+//  Created by 石山岭 on 2016/11/21.
+//  Copyright © 2016年 石山岭. All rights reserved.
+//
+
+#ifndef EntityConvenient_pch
+#define EntityConvenient_pch
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+
+/**
+ *导航类
+ */
+
+#import <BaiduMapAPI_Map/BMKAnnotation.h>
+#import <BaiduMapAPI_Map/BMKMapComponent.h>//引入地图功能所有的头文件 地图展示
+#import <BaiduMapAPI_Location/BMKLocationComponent.h>//引入定位功能所有的头文件 定位
+#import "UserCurrentPositionSingleton.h"//存放用户当前位置的单例
+#import "RegisteredViewController.h"//注册
+#import "LogInViewController.h"//登录
+#import "BaseTabBarVC.h"        //tabbar控制器
+#import "ShoppingCartVC.h"      //购物车界面
+#import "MapViewController.h"   //地图主界面
+#import "MyViewController.h"        //我的界面
+#import "UITableView+SDAutoTableViewCellHeight.h"
+#import "UIView+SDAutoLayout.h" //第三方布局
+#import <MJRefresh.h>//第三方刷新类
+#import "StoreViewController.h" //店铺界面
+#import "SellerOrderGoodsTVCell.h"//店铺订单商品展示
+#import "VendorViewController.h"//厂家界面
+#import "GoodsDetailsVController.h"//商品详情界面
+#import "GoodsViewController.h" //商品推荐界面
+#import "GoodsRecCViewCell.h"//通用的商品推荐cell
+#import "EstimateHeightSingleton.h"//计算键盘高度的单利
+#import "MessageViewController.h"//消息中心
+#import "TakeBackKBView.h"//模仿京东键盘上方的回收按钮
+#import "ScanViewController.h"//二维码扫描
+#import "AppDelegate.h"
+#import "UIImageView+Extension.h"
+#import "SellerDataSingleton.h"//存储卖家用户信息的单例
+#import "UserDataSingleton.h"//存储买家用户信息的单例
+#import "PopUpView.h"//规格选择弹出窗
+#import "OrderBtn.h"//自定义btn 用于订单使用
+#import "JKCountDownButton.h"//验证码倒计时按钮
+#import "FBCScoreStar.h"//评价的星星
+#import "DPImagePickerVC.h"//自定义相册编辑界面
+#import "CarChooseView.h"// 选择器
+#import "SAAddMapSymbolVC.h"//添加自己在地图上的位置
+#import "NotLoggedInTableViewCell.h"//没有登录cell
+#import "NoInternetTVCell.h"//没有网络cell
+#import "RegularExpressions.h"//判断手机号正则
+#import "AFNetworking.h"
+#import "MBProgressHUD.h"
+#import "AFHTTPSessionManager.h"
+#import "UIImageView+WebCache.h"
+
+#import "GoodsDetailsModel+CoreDataProperties.h"//商品详情model
+#import "PayPopUpView.h"//支付弹窗
+#import "MapSearchStoreModel+CoreDataProperties.h"//地图上的店铺搜索
+#import "StoreRankingListModel+CoreDataProperties.h"//店铺排行model -----这是测试版本
+#import "StoreRankingListModel+CoreDataProperties.h"//店铺详情信息
+#import "OrderDetailsModel+CoreDataProperties.h"//订单详情
+#import "RecentSearchCity+CoreDataProperties.h"//城市存储
+#import "UserDataModel+CoreDataProperties.h"//存储用户信息
+#import "ShippingAddressModel+CoreDataClass.h"//买家收货地址
+#import "ShoppingCartStoreModel+CoreDataProperties.h"//购物车里面商店列表model
+#import "ShoppingCartGoodsModel+CoreDataProperties.h"//购物车里面商店列表里面的商品列表model
+#import "SellerOrderGoodsModel+CoreDataProperties.h"//卖家订单列表里面的商品展示model
+#import "SellerOrderListModel+CoreDataProperties.h"//卖家订单列表里面的商家 里面包含SellerOrderGoodsModel
+#import "SellerShipAddressModel+CoreDataProperties.h"//买家收货地址
+
+#import "FactoryDataModel+CoreDataProperties.h"//厂家展示model
+
+#import "BuyersOrderGoodsModel+CoreDataProperties.h"//买家订单列表里面的商品展示model
+#import "BuyersOrderListModel+CoreDataProperties.h"//买家订单列表里面的商家 里面包含BuyersOrderGoodsModel
+#import "DriverDataModel+CoreDataProperties.h"//司机资料model
+#import "DriverCarOrderDetailsModel+CoreDataProperties.h"//司机订单详情
+#import "DriverCarOrderModel+CoreDataProperties.h"//司机订单model
+#import "SellerDataModel+CoreDataProperties.h"//卖家信息model
+#import "FootprintModel+CoreDataProperties.h"
+#import "GoodsCollModel+CoreDataProperties.h"
+
+#define kURL_WYD "http://192.168.0.245:8080/com-zerosoft-boot-assembly-front-local-1.0.0-SNAPSHOT"
+#define kWX_AppId @"wx5dedd4518bb5f2b0"
+
+#import "UIViewController+NetworkDetermineVC.h"
+
+//tag值 "1" 开头的是label "2" 开头的是image   "3" 开头的是自定义视图
+
+//外网xxxxxxxxxxxxxxxx  http://106.14.158.95:8080/com-zerosoft-boot-assembly-seller-local-1.0.0-SNAPSHOT
+#define kSHY_100  @"https://www.shitibian.com"
+#define kImage_URL @"https://www.shitibian.com/img"
+
+////臧鹏维
+//#define kSHY_100  @"http://192.168.0.245:8080/com-zerosoft-boot-assembly-front-local-1.0.0-SNAPSHOT"
+//#define kImage_URL @"http://192.168.0.245:8080/img"
+//#define kSellerUeseID @"dcf98c927d5f4690a3fe7d51ef1ff49b"
+//#define kSellerStoreID  @"16cfcd6345c64f2ab56e871c87bcd522"
+
+////101
+//#define kSHY_100  @"http://192.168.100.101:8080/com-zerosoft-boot-assembly-front-local-1.0.0-SNAPSHOT"
+//#define kSellerUeseID @"19"
+//#define kImage_URL @"http://192.168.100.101:8080/img"
+//#define kSellerStoreID  @"1"
+
+////197
+//#define kSHY_100  @"http://192.168.100.197:8080/com-zerosoft-boot-assembly-front-local-1.0.0-SNAPSHOT"
+//#define kSellerUeseID @"19"
+//#define kImage_URL @"http://192.168.100.101:8080/img"
+//#define kSellerStoreID  @"1"
+
+//购物车
+#import "UIView+Extension.h"
+#import "NSString+Extension.h"
+
+#import "SecurityUtil.h" //加密需要的文件
+#import "GTMBase64.h"  //加密需要的文件
+
+#define  kScreen_heigth [UIScreen mainScreen].bounds.size.height//屏幕高度
+#define  kScreen_widht  [UIScreen mainScreen].bounds.size.width//屏幕高度
+#define  kNavigation_Color  MColor(242, 48, 48)// 通用的红色
+#define  kNavigation_title_Color MColor(51, 51, 51) //导航条颜色
+#define  kTitle_Color  MColor(57, 206, 168)
+
+#define kNavigation_whrColor MColor(255, 255, 255)//导航条通用的白色
+
+#define  kDark [UIColor colorWithRed:238/256.0 green:238/256.0 blue:238/256.0 alpha:1];
+
+#define MFont(f) [UIFont systemFontOfSize:f]
+#define kIphone6Height 667.0
+#define kIphone6Width 375.0
+#define YouLikeLineCount 2
+#define YouLikeCellW ((SScreen_Width - YouLikeInset * (YouLikeLineCount - 1)) / YouLikeLineCount) * 1.0
+#define YouLikeInset kFit(3)
+#define YouLikeCellH kFit((kFit(259) - YouLikeInset))
+#define SScreen_Width [UIScreen mainScreen].bounds.size.width
+#define SScreen_Height [UIScreen mainScreen].bounds.size.height
+#define kFit(x) (SScreen_Width*((x)/kIphone6Width))
+#define MColor(r, g, b) [UIColor colorWithRed:(r)/255.0 green:(g)/255.0 blue:(b)/255.0 alpha:1.0f]
+
+#define TextSize kFit(16)
+
+#endif /* EntityConvenient_pch */

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="KGk-i7-Jjw" customClass="NoInternetTVCell">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="375"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="KGk-i7-Jjw" id="H2p-sc-9uM">
+                <rect key="frame" x="0.0" y="0.0" width="375" height="375"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="别着急.刷新界面试试看" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jFv-lq-W1N">
+                        <rect key="frame" x="0.0" y="238" width="375" height="15"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="15" id="xTU-cU-vez"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                        <color key="textColor" red="0.39603787660000001" green="0.39610767359999999" blue="0.39602297539999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="网络竟然崩溃了" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="VRo-kM-Z4j">
+                        <rect key="frame" x="0.0" y="198" width="375" height="21"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="21" id="b9n-im-7Zw"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                        <color key="textColor" red="0.2100023627" green="0.21059676999999999" blue="0.2420511544" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Xat-nr-itE">
+                        <rect key="frame" x="157" y="268" width="60" height="30"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="60" id="CRX-zI-xd5"/>
+                            <constraint firstAttribute="height" constant="30" id="bBF-64-zPb"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                        <state key="normal" title="刷新">
+                            <color key="titleColor" red="0.93324452638626099" green="0.93339747190475464" blue="0.93321198225021362" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        </state>
+                        <connections>
+                            <action selector="handleRefreshView:" destination="KGk-i7-Jjw" eventType="touchUpInside" id="Xce-pO-QMu"/>
+                        </connections>
+                    </button>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="NoInt.png" translatesAutoresizingMaskIntoConstraints="NO" id="yK5-bf-dCA">
+                        <rect key="frame" x="132" y="76" width="110" height="110"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="110" id="Khn-lF-w8n"/>
+                            <constraint firstAttribute="height" constant="110" id="nn5-Xa-N23"/>
+                        </constraints>
+                    </imageView>
+                </subviews>
+                <color key="backgroundColor" red="0.93324452638626099" green="0.93339747190475464" blue="0.93321198225021362" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                <constraints>
+                    <constraint firstItem="jFv-lq-W1N" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leadingMargin" constant="-8" id="0xQ-Dk-nsj"/>
+                    <constraint firstItem="yK5-bf-dCA" firstAttribute="centerX" secondItem="H2p-sc-9uM" secondAttribute="centerX" id="2EV-RZ-XzW"/>
+                    <constraint firstItem="VRo-kM-Z4j" firstAttribute="centerY" secondItem="H2p-sc-9uM" secondAttribute="centerY" constant="21" id="2uQ-jz-svD"/>
+                    <constraint firstItem="Xat-nr-itE" firstAttribute="centerX" secondItem="H2p-sc-9uM" secondAttribute="centerX" id="9Iq-ef-ibd"/>
+                    <constraint firstItem="Xat-nr-itE" firstAttribute="top" secondItem="jFv-lq-W1N" secondAttribute="bottom" constant="15" id="UR4-qB-Kky"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="VRo-kM-Z4j" secondAttribute="trailing" constant="-8" id="XxL-9H-Jzv"/>
+                    <constraint firstItem="jFv-lq-W1N" firstAttribute="top" secondItem="VRo-kM-Z4j" secondAttribute="bottom" constant="19" id="bgb-Tm-K9o"/>
+                    <constraint firstItem="VRo-kM-Z4j" firstAttribute="top" secondItem="yK5-bf-dCA" secondAttribute="bottom" constant="12" id="fD9-CW-LkE"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="jFv-lq-W1N" secondAttribute="trailing" constant="-8" id="lZN-PQ-cig"/>
+                    <constraint firstItem="VRo-kM-Z4j" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leadingMargin" constant="-8" id="xyv-yP-kMZ"/>
+                </constraints>
+            </tableViewCellContentView>
+            <connections>
+                <outlet property="RefreshViewBtn" destination="Xat-nr-itE" id="DcV-9i-d6z"/>
+            </connections>
+            <point key="canvasLocation" x="57.5" y="54.5"/>
+        </tableViewCell>
+    </objects>
+    <resources>
+        <image name="NoInt.png" width="115" height="115"/>
+    </resources>
+</document>

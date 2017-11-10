@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12120" systemVersion="16E195" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12088"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="108" id="KGk-i7-Jjw" customClass="OrdersCurrentStateCell">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="100"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="KGk-i7-Jjw" id="H2p-sc-9uM">
+                <rect key="frame" x="0.0" y="0.0" width="375" height="100"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="orderStare.png" translatesAutoresizingMaskIntoConstraints="NO" id="Sse-9z-Wvx">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="100"/>
+                    </imageView>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="测试数据" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cTw-Ic-3yv">
+                        <rect key="frame" x="14" y="33" width="172" height="34"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="172" id="edy-K4-D5z"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="cTw-Ic-3yv" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leadingMargin" constant="6" id="Gpr-wX-wEB"/>
+                    <constraint firstItem="Sse-9z-Wvx" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leadingMargin" constant="-8" id="Q8I-FY-yhM"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="Sse-9z-Wvx" secondAttribute="bottom" constant="-8.5" id="aJ8-iY-XTv"/>
+                    <constraint firstItem="cTw-Ic-3yv" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="topMargin" constant="25" id="dyS-vn-ZZs"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="cTw-Ic-3yv" secondAttribute="bottom" constant="25" id="lrG-eu-RJz"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="Sse-9z-Wvx" secondAttribute="trailing" constant="-8" id="mik-Dz-k4K"/>
+                    <constraint firstItem="Sse-9z-Wvx" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="topMargin" constant="-8" id="rcf-Jg-3JO"/>
+                </constraints>
+            </tableViewCellContentView>
+            <connections>
+                <outlet property="orderStateLabel" destination="cTw-Ic-3yv" id="8AC-ug-zoh"/>
+            </connections>
+            <point key="canvasLocation" x="13.5" y="2"/>
+        </tableViewCell>
+    </objects>
+    <resources>
+        <image name="orderStare.png" width="640" height="118"/>
+    </resources>
+</document>
