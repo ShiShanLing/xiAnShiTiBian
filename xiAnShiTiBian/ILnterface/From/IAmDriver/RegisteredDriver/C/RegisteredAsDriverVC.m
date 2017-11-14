@@ -11,7 +11,7 @@
 
 static BOOL agreement;//判断是否接受协议 设置默认为NO;
 
-@interface RegisteredAsDriverVC ()<UITextFieldDelegate,UIScrollViewDelegate, BMKMapViewDelegate,BMKLocationServiceDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,DPImagePickerDelegate, CarChooseViewDelegate>
+@interface RegisteredAsDriverVC ()<UITextFieldDelegate,UIScrollViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,DPImagePickerDelegate, CarChooseViewDelegate>
 
 /**
  *汽车型号选择 Fahrzeugmodell
@@ -59,14 +59,7 @@ static BOOL agreement;//判断是否接受协议 设置默认为NO;
  *提交按钮
  */
 @property (nonatomic, strong)UIButton *submitButton;
-/**
- *基本地图
- */
-@property (nonatomic, strong)BMKMapView* mapView;
-/**
- *定位
- */
-@property (nonatomic, strong)BMKLocationService* locService;
+
 
 @property (nonatomic, strong)UIImagePickerController *picker;
 //  上传图片数组

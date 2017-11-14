@@ -89,7 +89,7 @@
     if (component == 0) {
         self.selectedArray = provinceArray[row][@"cities"];
         [self.cityArray removeAllObjects];
-        //NSLog(@"%@",   self.selectedArray);
+
         [self.selectedArray enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             [self.cityArray addObject:obj[@"city"]];
         }];
@@ -101,7 +101,6 @@
     }else if (component == 1) {
         if (self.selectedArray.count == 0) {
             self.selectedArray = [provinceArray firstObject][@"cities"];
-            
         }
         self.areaArray = [NSMutableArray arrayWithArray:[self.selectedArray objectAtIndex:row][@"areas"]];
         [pickerView reloadComponent:2];
@@ -113,6 +112,7 @@
     NSInteger index = [_pickerView selectedRowInComponent:0];
     NSInteger index1 = [_pickerView selectedRowInComponent:1];
     NSInteger index2 = [_pickerView selectedRowInComponent:2];
+    NSLog(@"index%ld index1%ld index2%ld", index,index1,index2);
     self.province = self.provinces[index];
     self.city = self.cityArray[index1];
     if (self.areaArray.count != 0) {
@@ -144,21 +144,19 @@
         [pickerLabel setTextAlignment:UITextAlignmentCenter];
         [pickerLabel setBackgroundColor:MColor(238, 238, 238)];
         [pickerLabel setFont:[UIFont boldSystemFontOfSize:kFit(18)]];
-        
     }
     pickerLabel.text=[self pickerView:pickerView titleForRow:row forComponent:component];
     return pickerLabel;
-
-
 }
 //btn点击事件
 - (void)handledetermineBtn:(UIButton *)sender {
-
     if ([_delegate respondsToSelector:@selector(CitySelectionConfirmOrCancel:cityName:regionName:)]) {
+        if (self.province.length == 0) {
+              [_delegate CitySelectionConfirmOrCancel:sender cityName:@"北京" regionName:@"通州"];
+        }else {
         [_delegate CitySelectionConfirmOrCancel:sender cityName:self.province regionName:[NSString stringWithFormat:@"%@%@", self.city, self.area]];
+        }
     }
-    
-
 }
 
 - (NSMutableArray *)provinces{

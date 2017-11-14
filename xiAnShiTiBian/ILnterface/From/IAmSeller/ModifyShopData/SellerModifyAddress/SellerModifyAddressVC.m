@@ -12,7 +12,7 @@
  */
 static CGFloat  MapHierarchy = 15;
 static CLLocationCoordinate2D Position;//存储用户当前位置
-@interface SellerModifyAddressVC ()<BMKMapViewDelegate,BMKLocationServiceDelegate, UITextViewDelegate, UITextFieldDelegate>
+@interface SellerModifyAddressVC ()<UITextViewDelegate, UITextFieldDelegate>
 
 @property (nonatomic, strong)TakeBackKBView *takeBackKBView;
 
@@ -25,14 +25,7 @@ static CLLocationCoordinate2D Position;//存储用户当前位置
  *判断textView里面有没有文字 如果没有就显示提示文字,因为textview没有默认提示文字的属性 所以就用label代替了
  */
 @property (nonatomic, strong)UILabel *promptLabel;
-/**
- *基本地图
- */
-@property (nonatomic, strong)BMKMapView* mapView;
-/**
- *定位
- */
-@property (nonatomic, strong)BMKLocationService* locService;
+
 
 @end
 
@@ -78,13 +71,11 @@ static CLLocationCoordinate2D Position;//存储用户当前位置
     //创建UIScrollView
     [self createScrollView];
     [self createMap];
-    
+    //定位按钮
     UIButton *mapCenterBtn = [UIButton new];
     UIImage *mapCenterImage = [UIImage imageNamed:@"MapCenter"];
     mapCenterImage = [mapCenterImage imageWithRenderingMode:(UIImageRenderingModeAlwaysOriginal)];
     [mapCenterBtn setImage:mapCenterImage forState:(UIControlStateNormal)];
-    [_mapView addSubview:mapCenterBtn];
-    mapCenterBtn.sd_layout.widthIs(kFit(50)).heightIs(kFit(50)).centerXEqualToView(_mapView).centerYEqualToView(_mapView);
     
     [self createView];
     
@@ -115,20 +106,6 @@ static CLLocationCoordinate2D Position;//存储用户当前位置
  
 }
 - (void)createMap {
-
-    self.mapView = [[BMKMapView alloc] initWithFrame:CGRectMake(0, 0, kScreen_widht, kFit(200))];
-    self.mapView.showMapScaleBar = YES;
-    _mapView.delegate = self;
-    self.mapView.zoomLevel = MapHierarchy;
-    self.mapView.mapScaleBarPosition = CGPointMake(kScreen_widht-100, kFit(170));
-    //打开定位服务
-    self.locService = [[BMKLocationService alloc]init];
-    [_locService startUserLocationService];
-    _mapView.showsUserLocation = NO;//先关闭显示的定位图层
-    _mapView.userTrackingMode = BMKUserTrackingModeNone;//设置定位的状态
-    // _mapView.showsUserLocation = YES;//显示定位图层
-    [_scrollView addSubview:self.mapView];
-
     
 }
 //创建视图
@@ -138,7 +115,7 @@ static CLLocationCoordinate2D Position;//存储用户当前位置
     phoneLabel.textColor = MColor(51, 51, 51);
     phoneLabel.font = MFont(kFit(15));
     [_scrollView addSubview:phoneLabel];
-    phoneLabel.sd_layout.leftSpaceToView(_scrollView, kFit(12)).topSpaceToView(_mapView, kFit(15)).widthIs(kFit(200)).heightIs(kFit(15));
+  //  phoneLabel.sd_layout.leftSpaceToView(_scrollView, kFit(12)).topSpaceToView(_mapView, kFit(15)).widthIs(kFit(200)).heightIs(kFit(15));
     
     UIView *bottomView = [UIView new];
     bottomView.backgroundColor = [UIColor whiteColor];
@@ -290,127 +267,19 @@ static CLLocationCoordinate2D Position;//存储用户当前位置
     [self.AddressTF resignFirstResponder];
     [self.DAATV resignFirstResponder];
 }
-#pragma mark --- 地图的代理
-/**
- *点中底图空白处会回调此接口
- *@param mapview 地图View
- *@param coordinate 空白处坐标点的经纬度
- */
-- (void)mapView:(BMKMapView *)mapView onClickedMapBlank:(CLLocationCoordinate2D)coordinate {
-    
-    
-    
-}
-//按地图相应的方法
-- (void)mapview:(BMKMapView *)mapView onForceTouch:(CLLocationCoordinate2D)coordinate force:(CGFloat)force maximumPossibleForce:(CGFloat)maximumPossibleForce {
-    
-    
-}
-//长按地图响应的方法
-- (void)mapview:(BMKMapView *)mapView onLongClick:(CLLocationCoordinate2D)coordinate {
-    
-    
-}
-/**
- *双击地图时会回调此接口
- *@param mapView 地图View
- *@param coordinate 返回双击处坐标点的经纬度
- */
-- (void)mapview:(BMKMapView *)mapView onDoubleClick:(CLLocationCoordinate2D)coordinate {
-    
-    
-    
-}
-//地图区域发生变化时调用
-- (void)mapView:(BMKMapView *)mapView regionDidChangeAnimated:(BOOL)animated {
-    MapHierarchy = mapView.zoomLevel;
-    NSLog(@"------------------------%f", mapView.zoomLevel);
-    CLLocationCoordinate2D centerCoordinate;
-    if (LocateState == YES) {
-        centerCoordinate =Position;
-        LocateState = NO;
-    }else {
-        centerCoordinate =mapView.region.center;
-    }
-    
-    
-    NSLog(@" regionDidChangeAnimated %f,%f",centerCoordinate.latitude, centerCoordinate.longitude);
-    CLGeocoder *geocoder = [[CLGeocoder alloc]init];
-    CLLocation *location = [[CLLocation alloc]initWithLatitude:centerCoordinate.latitude longitude:centerCoordinate.longitude];
-    [geocoder reverseGeocodeLocation:location completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
-        for (CLPlacemark *place in placemarks) {
-            
-            NSDictionary *location =[place addressDictionary];
-            NSLog(@"国家：%@",[location objectForKey:@"Country"]);
-            NSLog(@"城市：%@",[location objectForKey:@"State"]);
-            NSLog(@"区：%@",[location objectForKey:@"SubLocality"]);
-            NSLog(@"位置：%@", place.name);
-            NSLog(@"国家：%@", place.country);
-            NSLog(@"城市：%@", place.locality);
-            NSLog(@"区：%@", place.subLocality);
-            NSLog(@"街道：%@", place.thoroughfare);
-            NSLog(@"子街道：%@", place.subThoroughfare);
-            
-            _AddressTF.text = [NSString stringWithFormat:@"%@%@%@", [location objectForKey:@"State"], place.locality, place.subLocality];
-        }
-    }];
-    
-}
+
 
 -(void)viewWillAppear:(BOOL)animated {
-    [_mapView viewWillAppear];
-    _mapView.delegate = self;
-    _mapView.overlooking = -30;
-    _locService.delegate = self;
+    [super viewWillAppear:animated];
     LocateState= YES;
 }
 - (void)viewWillDisappear:(BOOL)animated {
-    [_mapView viewWillDisappear];
-    _mapView.delegate = nil;
-    _locService.delegate = nil;
+    [super viewWillDisappear:animated];
+    
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
-}
-
-/**
- *在地图View将要启动定位时，会调用此函数
- *@param mapView 地图View
- */
-- (void)willStartLocatingUser{
-    NSLog(@"start locate");
-}
-/**
- *用户位置更新后，会调用此函数
- *@param userLocation 新的用户位置
- */
-- (void)didUpdateBMKUserLocation:(BMKUserLocation *)userLocation{
-    //    NSLog(@"didUpdateUserLocation lat %f,long %f",userLocation.location.coordinate.latitude,userLocation.location.coordinate.longitude);
-    [_mapView updateLocationData:userLocation];
-    
-        BMKCoordinateRegion region;
-        region.center.latitude = userLocation.location.coordinate.latitude;
-        region.center.longitude = userLocation.location.coordinate.longitude;
-        Position =region.center;
-        _mapView.region = region;
-
-    [_locService stopUserLocationService];
-}
-/**
- *在地图View停止定位后，会调用此函数
- *@param mapView 地图View
- */
-- (void)didStopLocatingUser {
-    NSLog(@"stop locate");
-}
-/**
- *定位失败后，会调用此函数
- *@param mapView 地图View
- *@param error 错误号，参考CLError.h中定义的错误号
- */
-- (void)didFailToLocateUserWithError:(NSError *)error {
-    NSLog(@"location error");
 }
 
 //系统提示的弹出窗
@@ -421,7 +290,6 @@ static CLLocationCoordinate2D Position;//存储用户当前位置
 }
 - (void)showAlert:(NSString *) _message time:(CGFloat)time{//时间
     UIAlertView *promptAlert = [[UIAlertView alloc] initWithTitle:@"提示:" message:_message delegate:nil cancelButtonTitle:nil otherButtonTitles:nil];
-    
     
     [NSTimer scheduledTimerWithTimeInterval:time
                                      target:self

@@ -1,9 +1,9 @@
 target 'xiAnShiTiBian' do
 platform :ios, '8.0'
 pod 'MJExtension'
-pod 'AMapNavi'
+pod 'AMap3DMap'
+pod 'AMapLocation'
 pod 'AFNetworking'
-pod 'BaiduMapKit'
 pod 'MJRefresh'
 pod 'MBProgressHUD'
 pod 'FMDB’

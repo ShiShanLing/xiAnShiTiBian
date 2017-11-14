@@ -11,9 +11,12 @@
 
 // Include any system framework and library headers here that should be included in all compilation units.
 // You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
-#import <BaiduMapAPI_Map/BMKAnnotation.h>
-#import <BaiduMapAPI_Map/BMKMapComponent.h>//引入地图功能所有的头文件 地图展示
-#import <BaiduMapAPI_Location/BMKLocationComponent.h>//引入定位功能所有的头文件 定位
+
+
+#import <AMapNaviKit/AMapNaviKit.h>
+#import <AMapFoundationKit/AMapFoundationKit.h>
+#import <MAMapKit/MAMapKit.h>
+#import <AMapLocationKit/AMapLocationKit.h>
 #import "UserCurrentPositionSingleton.h"//存放用户当前位置的单例
 #import "RegisteredViewController.h"//注册
 #import "LogInViewController.h"//登录

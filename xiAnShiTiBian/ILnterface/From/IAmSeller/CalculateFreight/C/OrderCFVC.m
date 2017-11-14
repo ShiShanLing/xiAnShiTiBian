@@ -180,9 +180,11 @@
  */
 - (void) CalculateFreight{
     
-        BMKMapPoint point1 = BMKMapPointForCoordinate(CLLocationCoordinate2DMake(self.buyersModel.latitude.doubleValue, self.buyersModel.longitude.doubleValue));
-        BMKMapPoint point2 = BMKMapPointForCoordinate(CLLocationCoordinate2DMake([SellerDataSingleton mainSingleton].sellerDataModel.storeLatitude.doubleValue, [SellerDataSingleton mainSingleton].sellerDataModel.storeLongitude.doubleValue));
-        CLLocationDistance distance = BMKMetersBetweenMapPoints(point1,point2);
+  CLLocationCoordinate2D loc1 =  (CLLocationCoordinate2DMake(self.buyersModel.latitude.doubleValue, self.buyersModel.longitude.doubleValue));
+    CLLocationCoordinate2D loc2= (CLLocationCoordinate2DMake([SellerDataSingleton mainSingleton].sellerDataModel.storeLatitude.doubleValue, [SellerDataSingleton mainSingleton].sellerDataModel.storeLongitude.doubleValue));
+    MAMapPoint p1 = MAMapPointForCoordinate(loc1);
+    MAMapPoint p2 = MAMapPointForCoordinate(loc2);
+    CLLocationDistance distance =  MAMetersBetweenMapPoints(p1, p2);
     if (_ChooseCarDic.count == 0) {
         [self  showAlert:@"请选择车型"];
     }else {

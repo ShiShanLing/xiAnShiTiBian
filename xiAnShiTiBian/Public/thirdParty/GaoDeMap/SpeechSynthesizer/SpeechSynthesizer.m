@@ -16,8 +16,7 @@
 
 @implementation SpeechSynthesizer
 
-+ (instancetype)sharedSpeechSynthesizer
-{
++ (instancetype)sharedSpeechSynthesizer {
     static id sharedInstance = nil;
     
     static dispatch_once_t onceToken;

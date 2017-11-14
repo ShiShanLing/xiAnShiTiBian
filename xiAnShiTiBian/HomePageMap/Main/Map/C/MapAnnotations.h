@@ -7,9 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <BaiduMapAPI_Map/BMKPinAnnotationView.h>
 
-@interface MapAnnotations : BMKPinAnnotationView 
+@interface MapAnnotations : UIView
 /**
  *地图上展示的点分为两种 一是 店铺 二是厂家  所以都用这个来存储 不要在意名字 要看他的内在
  */

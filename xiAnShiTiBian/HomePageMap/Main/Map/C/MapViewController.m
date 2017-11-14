@@ -11,7 +11,7 @@
 
 #import "MapViewController.h"
 
-
+#import "gaodeMapPinAnnotationView.h"
 #import "ClassificationSearchView.h"//地图界面分类搜索
 #import "MapSearchBoxView.h"//直接搜索
 #import "MapCitySelectionView.h"//城市选择按钮
@@ -29,31 +29,23 @@
 
 #import "SearchVendorTVCell.h"
 
-
+#define DefaultLocationTimeout  6
+#define DefaultReGeocodeTimeout 3
 /**
  *存储用户当前位置经纬度
  */
 static CLLocationCoordinate2D Position;
 /**
- *用来判断是不是可以把用户位置移动到屏幕中心的方法,有两个情况会为YES 一是第一次进来的时候,而是点击定位按钮调用 
+ *用来判断是不是可以把用户位置移动到屏幕中心的方法,有两个情况会为YES 一是第一次进来的时候,而是点击定位按钮调用
  *handlePositioningBtn方法的时候 所以说再点击定位按钮的时候 重新定位把我的位置放到地图中间
  */
 static BOOL center = YES;
 static CGFloat  MapHierarchy = 15;
-@interface MapViewController ()<BMKMapViewDelegate,BMKLocationServiceDelegate, SearchBoxViewDelegate, MapCitySelectionViewDelegate, CityListViewControllerDelegate, MapSearchBoxViewDelegate, ClassificationSearchViewDelegate, MapSearchVCDelegate, MapPopUpPaopaoViewDelegate, UITableViewDelegate,UITableViewDataSource,MapSearchViewDelegate,UITextFieldDelegate, MapStoreShowTVCellDelegate, SearchVendorTVCellDelegate, UITabBarControllerDelegate>
+@interface MapViewController ()< SearchBoxViewDelegate, MapCitySelectionViewDelegate, CityListViewControllerDelegate, MapSearchBoxViewDelegate, ClassificationSearchViewDelegate, MapSearchVCDelegate, MapPopUpPaopaoViewDelegate, UITableViewDelegate,UITableViewDataSource,MapSearchViewDelegate,UITextFieldDelegate, MapStoreShowTVCellDelegate, SearchVendorTVCellDelegate, UITabBarControllerDelegate,MAMapViewDelegate,AMapLocationManagerDelegate,AMapNaviCompositeManagerDelegate>
 /**
  *
  */
 @property (nonatomic, strong)MapStoreTableView *tableView;
-/**
- *基本地图
- */
-@property (nonatomic, strong)BMKMapView* mapView;
-/**
- *定位
- */
-@property (nonatomic, strong)BMKLocationService* locService;
-
 
 @property (nonatomic, strong)ClassificationSearchView * ClassificationSearchView;
 @property (nonatomic, strong)MapSearchBoxView *SearchBoxView;
@@ -62,7 +54,6 @@ static CGFloat  MapHierarchy = 15;
  *卖方的店铺信息获取数组
  */
 @property (nonatomic, strong)NSMutableArray *sellerDataArray;
-
 /**
  *搜索view
  */
@@ -77,10 +68,23 @@ static CGFloat  MapHierarchy = 15;
  */
 
 @property (nonatomic, strong)UIView *backgroundView;
+
+//地图类
+@property (nonatomic, strong) MAMapView *mapView;
+@property (nonatomic, strong) AMapLocationManager *locationManager;
+@property (nonatomic, copy) AMapLocatingCompletionBlock completionBlock;
+@property (nonatomic, strong) AMapNaviCompositeManager *compositeManager;
 @end
 
 @implementation MapViewController
-
+// init
+- (AMapNaviCompositeManager *)compositeManager {
+    if (!_compositeManager) {
+        _compositeManager = [[AMapNaviCompositeManager alloc] init];  // 初始化
+        _compositeManager.delegate = self;  // 如果需要使用AMapNaviCompositeManagerDelegate的相关回调（如自定义语音、获取实时位置等），需要设置delegate
+    }
+    return _compositeManager;
+}
 - (MapCitySelectionView *)citySelectionView {
     if (!_citySelectionView) {
         _citySelectionView = [[MapCitySelectionView alloc] init];
@@ -114,29 +118,21 @@ static CGFloat  MapHierarchy = 15;
     if (!_sellerDataArray) {
         _sellerDataArray = [NSMutableArray array];
     }
-   return _sellerDataArray;
+    return _sellerDataArray;
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
     
     [super viewWillDisappear:animated];
     [super.navigationController setNavigationBarHidden:YES];
-    [_mapView viewWillDisappear];
-    _mapView.delegate = nil;
-    _locService.delegate = nil;
+
     
 }
 
 -(void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [super.navigationController setNavigationBarHidden:NO];
-    
-    [_locService startUserLocationService];
-    _mapView.showsUserLocation = NO;//先关闭显示的定位图层
-    _mapView.userTrackingMode = BMKUserTrackingModeNone;//设置定位的状态
-    _mapView.showsUserLocation = YES;//显示定位图层
-    _mapView.delegate = self;
-    _locService.delegate = self;
+   
     
 }
 - (void)noticeBanSliding:(NSNotificationCenter *)center{
@@ -150,21 +146,26 @@ static CGFloat  MapHierarchy = 15;
 }
 //tableView frame达到顶部
 - (void)WhetherInTopNCCenter:(NSNotificationCenter *)center {
-
+    
     _backgroundView.alpha = 1;
     
 }
 //tableView frame离开顶部
 - (void)leaveTopNCTopNCCenter:(NSNotificationCenter *)center {
-_backgroundView.alpha = 0;
+    _backgroundView.alpha = 0;
 }
+
 - (void)viewDidLoad {
     
     [super viewDidLoad];
     self.view.backgroundColor = MColor(238, 238, 238);
     self.navigationItem.title = @"地图";
-
-    [self createMapView];
+    
+    [self initMapView];
+    
+    [self initCompleteBlock];
+    
+    [self configLocationManager];
     [self createAdditional];
     NSNotificationCenter * BanSliding = [NSNotificationCenter defaultCenter];
     //禁止UITableVIew滑动
@@ -204,84 +205,200 @@ _backgroundView.alpha = 0;
     _SearchBoxView.delegate = self;
     [self.view addSubview:_SearchBoxView];
     _SearchBoxView.sd_layout.leftSpaceToView(_ClassificationSearchView, kFit(5)).topEqualToView(_ClassificationSearchView).heightRatioToView(_ClassificationSearchView, 1).rightSpaceToView(_citySelectionView, kFit(5));
-
-    
-    
     if ([UserDataSingleton mainSingleton].networkState == 0){
-        
-        
-        
         UIAlertController *actionSheetController = [UIAlertController alertControllerWithTitle:@"提醒!" message:@"您暂时没有联网" preferredStyle:UIAlertControllerStyleAlert];
-        
         UIAlertAction *showAllInfoAction = [UIAlertAction actionWithTitle:@"查看WIFI" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
             NSString * urlString = @"App-Prefs:root=WIFI";
-            
             if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:urlString]]) {
-                
                 if ([[UIDevice currentDevice].systemVersion doubleValue] >= 10.0) {
-                    
                     [[UIApplication sharedApplication] openURL:[NSURL URLWithString:urlString] options:@{} completionHandler:nil];
-                    
                 } else {
-                    
                     [[UIApplication sharedApplication] openURL:[NSURL URLWithString:urlString]];
-                    
                 }
-                
             }
-            
         }];
         UIAlertAction *commentAction = [UIAlertAction actionWithTitle:@"查看移动网络" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
             NSString * urlString = @"App-Prefs:root=MOBILE_DATA_SETTINGS_ID";
-            
             if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:urlString]]) {
-                
                 if ([[UIDevice currentDevice].systemVersion doubleValue] >= 10.0) {
-                    
                     [[UIApplication sharedApplication] openURL:[NSURL URLWithString:urlString] options:@{} completionHandler:nil];
-                    
                 } else {
-                    
                     [[UIApplication sharedApplication] openURL:[NSURL URLWithString:urlString]];
-                    
                 }
-                
             }
-            
         }];
         UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"知道了" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
-            
         }];
-        
         [actionSheetController addAction:cancelAction];
         [actionSheetController addAction:commentAction];
         [actionSheetController addAction:showAllInfoAction];
-        
         [self presentViewController:actionSheetController animated:YES completion:nil];
-        
     }
+}
+
+- (void)configLocationManager {
+    self.locationManager = [[AMapLocationManager alloc] init];
+    
+    [self.locationManager setDelegate:self];
+    
+    //设置期望定位精度
+    [self.locationManager setDesiredAccuracy:kCLLocationAccuracyHundredMeters];
+    
+    //设置不允许系统暂停定位
+    [self.locationManager setPausesLocationUpdatesAutomatically:NO];
+    
+    //设置允许在后台定位
+    [self.locationManager setAllowsBackgroundLocationUpdates:YES];
+    
+    //设置定位超时时间
+    [self.locationManager setLocationTimeout:DefaultLocationTimeout];
+    
+    //设置逆地理超时时间
+    [self.locationManager setReGeocodeTimeout:DefaultReGeocodeTimeout];
+    
+    //设置开启虚拟定位风险监测，可以根据需要开启
+    [self.locationManager setDetectRiskOfFakeLocation:NO];
+    
+    [self.mapView removeAnnotations:self.mapView.annotations];
+    //进行单次带逆地理定位请求
+    [self.locationManager requestLocationWithReGeocode:YES completionBlock:self.completionBlock];
+    
+   
+}
+- (void)initMapView {
+    if (self.mapView == nil)
+    {
+        self.mapView = [[MAMapView alloc] initWithFrame:self.view.bounds];
+        [self.mapView setDelegate:self];
+        [self.mapView setZoomLevel:13 animated:NO];
+        
+        [self.view addSubview:self.mapView];
+    }
+}
+- (void)cleanUpAction
+{
+    //停止定位
+    [self.locationManager stopUpdatingLocation];
+    
+    [self.locationManager setDelegate:nil];
+    
+    [self.mapView removeAnnotations:self.mapView.annotations];
+}
+
+- (void)reGeocodeAction {
+    [self.mapView removeAnnotations:self.mapView.annotations];
+    //进行单次带逆地理定位请求
+    [self.locationManager requestLocationWithReGeocode:YES completionBlock:self.completionBlock];
+}
+
+- (void)locAction
+{
+    [self.mapView removeAnnotations:self.mapView.annotations];
+    
+    //进行单次定位请求
+    [self.locationManager requestLocationWithReGeocode:NO completionBlock:self.completionBlock];
+}
+
+#pragma mark - Initialization
+
+- (void)initCompleteBlock
+{
+    __weak MapViewController *weakSelf = self;
+    self.completionBlock = ^(CLLocation *location, AMapLocationReGeocode *regeocode, NSError *error)
+    {
+        if (error != nil && error.code == AMapLocationErrorLocateFailed)
+        {
+            //定位错误：此时location和regeocode没有返回值，不进行annotation的添加
+            NSLog(@"定位错误:{%ld - %@};", (long)error.code, error.localizedDescription);
+            return;
+        }else if (error != nil
+                 && (error.code == AMapLocationErrorReGeocodeFailed
+                     || error.code == AMapLocationErrorTimeOut
+                     || error.code == AMapLocationErrorCannotFindHost
+                     || error.code == AMapLocationErrorBadURL
+                     || error.code == AMapLocationErrorNotConnectedToInternet
+                     || error.code == AMapLocationErrorCannotConnectToHost))
+        {
+            //逆地理错误：在带逆地理的单次定位中，逆地理过程可能发生错误，此时location有返回值，regeocode无返回值，进行annotation的添加
+            NSLog(@"逆地理错误:{%ld - %@};", (long)error.code, error.localizedDescription);
+        }else if (error != nil && error.code == AMapLocationErrorRiskOfFakeLocation){
+            //存在虚拟定位的风险：此时location和regeocode没有返回值，不进行annotation的添加
+            NSLog(@"存在虚拟定位的风险:{%ld - %@};", (long)error.code, error.localizedDescription);
+            return;
+        }else{
+            //没有错误：location有返回值，regeocode是否有返回值取决于是否进行逆地理操作，进行annotation的添加
+        }
+        //根据定位信息，添加annotation
+        MAPointAnnotation *annotation = [[MAPointAnnotation alloc] init];
+        [annotation setCoordinate:location.coordinate];
+        
+        //有无逆地理信息，annotationView的标题显示的字段不一样
+        if (regeocode){
+            [annotation setTitle:[NSString stringWithFormat:@"%@", regeocode.formattedAddress]];
+            weakSelf.citySelectionView.citySearchLabel.text = regeocode.city;
+            [annotation setSubtitle:@"我的位置"];
+        }else{
+            [annotation setTitle:[NSString stringWithFormat:@"lat:%f;lon:%f;", location.coordinate.latitude, location.coordinate.longitude]];
+            [annotation setSubtitle:[NSString stringWithFormat:@"accuracy:%.2fm", location.horizontalAccuracy]];
+        }
+        [weakSelf addAnnotationToMapView:annotation];
+        [weakSelf CityInformation:location.coordinate];
+        [weakSelf.mapView selectAnnotation:annotation animated:YES];
+        [weakSelf.mapView setCenterCoordinate:annotation.coordinate animated:YES];
+    };
+}
+
+- (void)addAnnotationToMapView:(id<MAAnnotation>)annotation {
+    [self.mapView addAnnotation:annotation];
     
 }
 
 
-//创建地图
-- (void)createMapView {
-    self.mapView = [[BMKMapView alloc] initWithFrame:CGRectMake(0, 0, kScreen_widht, kScreen_heigth)];
-    _mapView.isSelectedAnnotationViewFront = YES;
-    self.mapView.showMapScaleBar = YES;
-    _mapView.overlooking = -30;
-    [_mapView setMapType:BMKMapTypeStandard];
-    self.mapView.zoomLevel = MapHierarchy;
-    self.mapView.mapScaleBarPosition = CGPointMake(kScreen_widht-100, kScreen_heigth-70);
-    //打开定位服务
-    self.locService = [[BMKLocationService alloc]init];
-    [_locService startUserLocationService];
-    _mapView.showsUserLocation = NO;//先关闭显示的定位图层
-    _mapView.userTrackingMode = BMKUserTrackingModeNone;//设置定位的状态
-    _mapView.showsUserLocation = YES;//显示定位图层
-    [self.view addSubview:self.mapView];
 
+- (MAAnnotationView *)mapView:(MAMapView *)mapView viewForAnnotation:(id<MAAnnotation>)annotation{
+    if ([annotation isKindOfClass:[MAPointAnnotation class]]) {
+        
+        static NSString *pointReuseIndetifier = @"pointReuseIndetifier";
+        
+        gaodeMapPinAnnotationView *annotationView = (gaodeMapPinAnnotationView *)[mapView dequeueReusableAnnotationViewWithIdentifier:pointReuseIndetifier];
+        if (annotationView == nil)
+        {
+            annotationView = [[gaodeMapPinAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:pointReuseIndetifier];
+        }
+        annotationView.canShowCallout   = YES;
+        annotationView.animatesDrop     = YES;
+        annotationView.draggable        = NO;
+        annotationView.pinColor         = MAPinAnnotationColorPurple;
+
+        if ([annotation.subtitle isEqualToString:@"我的位置"]) {
+            annotationView.image = [UIImage imageNamed:@"icon_center_point"];
+        }else {
+            annotationView.image = [UIImage imageNamed:@"pin_red"];
+        }
+            if ([self.SearchType isEqualToString:@"factoryName"]) {
+                for (FactoryDataModel *model in self.storeArray) {
+                    if ([model.factoryLongitude floatValue] == annotation.coordinate.longitude && [model.factoryLatitude floatValue] == annotation.coordinate.latitude) {
+                        annotationView.storeID = model.factoryId;// 不懂这个什么意思 就看 storeID的注释
+                    }
+                }
+            }else {
+        
+                for (MapSearchStoreModel *model in self.storeArray) {
+                    if ([model.storeLongitude floatValue] == annotation.coordinate.longitude && [model.storeLatitude    floatValue] == annotation.coordinate.latitude) {
+                        annotationView.storeID = model.storeId;
+                    }
+                }
+            }
+        
+        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
+        [annotationView addGestureRecognizer:tap];
+        return annotationView;
+    }
+    
+    return nil;
 }
+
+
 //创建附加功能 地图上的附件
 - (void)createAdditional{
     UIButton *PositioningBtn = [UIButton buttonWithType:(UIButtonTypeSystem)];
@@ -329,7 +446,7 @@ _backgroundView.alpha = 0;
         [self presentViewController:alertV animated:YES completion:^{
             nil;
         }];
-
+        
         
     }else {
         
@@ -342,8 +459,8 @@ _backgroundView.alpha = 0;
             [self.navigationController pushViewController:VC animated:YES];
         }
     }
-
-
+    
+    
 }
 
 - (void)MapMainSearchClick {
@@ -356,16 +473,7 @@ _backgroundView.alpha = 0;
 //搜索商品返回的代理方法
 - (void)searchResults:(NSString *)str storeArray:(NSArray *)array{
     
-    [self.mapView removeOverlays:self.mapView.overlays];
-    [self.mapView removeAnnotations:self.mapView.annotations];
-    [self.storeArray removeAllObjects];
-    self.storeArray = [NSMutableArray arrayWithArray:array];
-    [self.sellerDataArray removeAllObjects];
-    self.sellerDataArray = [NSMutableArray arrayWithArray:self.storeArray];
-    _mapView.delegate = self;
-    NSLog(@"self.sellerDataArray%@", self.sellerDataArray);
-    self.SearchType = str;
-    
+    //往地图上添加点
     if ([self.SearchType isEqualToString:@"factoryName"]) {
         for (FactoryDataModel *model in array) {
             CLLocationCoordinate2D coor;
@@ -375,18 +483,19 @@ _backgroundView.alpha = 0;
         }
     }else {
         for (MapSearchStoreModel *model in array) {
-        CLLocationCoordinate2D coor;
-        coor.latitude = [model.storeLatitude floatValue];
-        coor.longitude = [model.storeLongitude floatValue];
-        [self createAnnotationWithCoords:coor];
+            CLLocationCoordinate2D coor;
+            coor.latitude = [model.storeLatitude floatValue];
+            coor.longitude = [model.storeLongitude floatValue];
+            [self createAnnotationWithCoords:coor];
+        }
     }
-}
     [self.tableView reloadData];
     
 }
 //选择城市
-- (void)CitySelectionClick {
 
+- (void)CitySelectionClick {
+    
     CityListViewController *cityListView = [[CityListViewController alloc]init];
     cityListView.delegate = self;
     cityListView.arrayHotCity = [NSMutableArray arrayWithObjects:
@@ -407,17 +516,17 @@ _backgroundView.alpha = 0;
     NSMutableArray *dataArray = [[NSMutableArray alloc] initWithContentsOfFile:plistPath];
     NSLog(@"%@", dataArray);
     cityListView.arrayHistoricalCity = dataArray;
-    //定位城市列表                                                                
+    //定位城市列表
     cityListView.arrayLocatingCity   = [NSMutableArray arrayWithObjects:@{@"provinceName":@"杭州", @"longitude":@"120.161693",@"latitude":@"30.280059"}, nil];
     [self presentViewController:cityListView animated:YES completion:nil];
 }
 - (void)MapClassSearchClick {
-
+    
     MapClassSearchVC *VC = [[MapClassSearchVC alloc] init];
     [VC setHidesBottomBarWhenPushed:YES];
     UINavigationController *NAVC = [[UINavigationController alloc] initWithRootViewController:VC];
     [self presentViewController:NAVC animated:YES completion:nil];
-
+    
 }
 
 - (void)handleQrCode {
@@ -425,32 +534,14 @@ _backgroundView.alpha = 0;
     ScanViewController *VC = [[ScanViewController alloc] init];
     [VC setHidesBottomBarWhenPushed:YES];
     [self.navigationController pushViewController:VC animated:YES];
-
-
+    
+    
 }
 //定位按钮点击事件
 - (void)handlePositioningBtn:(UIButton *)sender {
-    center = YES;
-    [_locService startUserLocationService];
-    _mapView.userTrackingMode = BMKUserTrackingModeNone;//设置定位的状态
-    
-}
-//地图区域发生变化时调用
-- (void)mapView:(BMKMapView *)mapView regionDidChangeAnimated:(BOOL)animated {
-    MapHierarchy = mapView.zoomLevel;
-    BMKCoordinateRegion region;
-    CLLocationCoordinate2D centerCoordinate = mapView.region.center;
-    region.center= centerCoordinate;
-    
-   // NSLog(@" regionDidChangeAnimated %f,%f",centerCoordinate.latitude, centerCoordinate.longitude);
-    CLGeocoder *geocoder = [[CLGeocoder alloc]init];
-    CLLocation *location = [[CLLocation alloc]initWithLatitude:centerCoordinate.latitude longitude:centerCoordinate.longitude];
-    [geocoder reverseGeocodeLocation:location completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
-        for (CLPlacemark *place in placemarks) {
-            NSDictionary *location =[place addressDictionary];
-                   }
-    }];
-    
+    [self.mapView removeAnnotations:self.mapView.annotations];
+    //进行单次带逆地理定位请求
+    [self.locationManager requestLocationWithReGeocode:YES completionBlock:self.completionBlock];
 }
 
 
@@ -459,31 +550,25 @@ _backgroundView.alpha = 0;
     // Dispose of any resources that can be recreated.
 }
 //搜索我周边的商店
+
 - (void) CityInformation:(CLLocationCoordinate2D)location{
     [self.storeArray removeAllObjects];
     [self.sellerDataArray removeAllObjects];
-    BMKCoordinateRegion region;
-    [UserCurrentPositionSingleton mainSingleton].Position = location;
-    
-    region.center.latitude = location.latitude;
-    region.center.longitude = location.longitude;
-    region.span.latitudeDelta = 0.25;
-    region.span.longitudeDelta = 0.25;
-    _mapView.region = region;
     [self indeterminateExample];
     
     NSString *URL_str =[NSString stringWithFormat:@"%@/searchApi/goodsList?searchType=All&Longitude=%f&Latitude=%f", kSHY_100,location.longitude, location.latitude];
     //NSLog(@"URL_str%@", URL_str);
     __block MapViewController *VC = self;
     AFHTTPSessionManager *session = [AFHTTPSessionManager manager];
- 
+    
     [session GET:URL_str parameters:nil progress:^(NSProgress * _Nonnull downloadProgress) {
         
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+        NSLog(@"responseObject%@", responseObject);
         NSArray *array = responseObject[@"lucenePager"];
         NSDictionary *dataDic = array[0];
         NSArray *storeArray = dataDic[@"result"];
-       [VC delayMethod];
+        [VC delayMethod];
         for (NSDictionary *storeDic in storeArray) {
             NSEntityDescription *des = [NSEntityDescription entityForName:@"MapSearchStoreModel" inManagedObjectContext:self.managedContext];
             //根据描述 创建实体对象
@@ -495,15 +580,16 @@ _backgroundView.alpha = 0;
         }
         self.sellerDataArray = [NSMutableArray arrayWithArray:self.storeArray];
         [self.tableView reloadData];
-
+        
         for (NSDictionary *dic in storeArray) {
             CLLocationCoordinate2D coor;
             coor.latitude = [dic[@"storeLatitude"]floatValue];
             coor.longitude = [dic[@"storeLongitude"]floatValue];
-            BMKPointAnnotation *pa = [[BMKPointAnnotation alloc] init];
-            pa.coordinate = coor;
-            pa.title = dic[@"storeName"];
-            [_mapView addAnnotation:pa];
+            MAPointAnnotation *annotation = [[MAPointAnnotation alloc] init];
+            [annotation setTitle:dic[@"storeName"]];
+            [annotation setCoordinate:coor];
+            [VC addAnnotationToMapView:annotation];
+        //往地图上添加 标注
         }
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         [VC showAlert:@"数据请求失败,请重试!" time:1.0];
@@ -513,152 +599,34 @@ _backgroundView.alpha = 0;
 }
 //地理位置编码
 - (void)locationCode:(CLLocationCoordinate2D)location2D{
-
+    
     CLGeocoder *geocoder = [[CLGeocoder alloc]init];
     CLLocation *location = [[CLLocation alloc]initWithLatitude:location2D.latitude longitude:location2D.longitude];
-
+    
     [geocoder reverseGeocodeLocation:location completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
         for (CLPlacemark *place in placemarks) {
             self.citySelectionView.citySearchLabel.text = place.locality;
             [UserCurrentPositionSingleton mainSingleton].cityName = place.locality;
         }
     }];
-
+    
 }
 
 -(void)createAnnotationWithCoords:(CLLocationCoordinate2D) coords {
     
-    BMKPointAnnotation *pa = [[BMKPointAnnotation alloc] init];
-    pa.coordinate = coords;
-    [_mapView addAnnotation:pa];
     
-}
-
-#pragma mark  BMKLocationServiceDelegate 百度地图定位的方法
-/**
- *在地图View将要启动定位时, 会调用此函数
- * mapView 地图View
- */
-- (void)willStartLocatingUser {
-    NSLog(@"start locate");
-}
-
-/**
- *用户位置更新后，会调用此函数   在这里请求附近的商家
- *@param userLocation 新的用户位置
- */
-- (void)didUpdateBMKUserLocation:(BMKUserLocation *)userLocation {
-    [_mapView updateLocationData:userLocation];
-
-    if (center) {
-        [_mapView removeOverlays:_mapView.overlays];
-        [_mapView removeAnnotations:_mapView.annotations];
-        
-        Position = userLocation.location.coordinate;
-        BMKCoordinateRegion region;
-        region.center.latitude = userLocation.location.coordinate.latitude;
-        region.center.longitude = userLocation.location.coordinate.longitude;
-        _mapView.region = region;
-        [self locationCode:region.center];
-        [self CityInformation: region.center];
-        center= NO;
-    }
-}
-
-/**
- *在地图View停止定位后，会调用此函数
- * mapView 地图View
- */
-
-- (void)didStopLocatingUser {
-    NSLog(@"stop locate");
-}
-/**
- *定位失败后，会调用此函数
- *@param mapView 地图
- *@param error 错误号，参考CLError.h中定义的错误号
- */
-- (void)didFailToLocateUserWithError:(NSError *)error {
-    
-    CLAuthorizationStatus status = [CLLocationManager authorizationStatus];//判断是否开启了定位
-    if (kCLAuthorizationStatusDenied == status || kCLAuthorizationStatusRestricted == status) {
-        
-        UIAlertController *alertV = [UIAlertController alertControllerWithTitle:@"提示:" message:@"您还没有定位, 如果您关闭了定位请在手机设置里面打开" preferredStyle:UIAlertControllerStyleAlert];
-        UIAlertAction *cancle = [UIAlertAction actionWithTitle:@"不用了" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        }];
-        UIAlertAction *confirm = [UIAlertAction actionWithTitle:@"去打开" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
-        }];
-        // 3.将“取消”和“确定”按钮加入到弹框控制器中
-        [alertV addAction:cancle];
-        [alertV addAction:confirm];
-        // 4.控制器 展示弹框控件，完成时不做操作
-        [self presentViewController:alertV animated:YES completion:^{
-            nil;
-        }];
-    }else {
-        //[self showAlert:@"定位失败,请检查您的网络"];
-    }
-   // NSLog(@"location error");
-}
-#pragma mark implement BMKMapViewDelegate
-/**
- *根据anntation生成对应的View
- *@param view 地图
- *@param annotation 指定的标注
- *@return 生成的标注View
- */
-- (BMKAnnotationView *)mapView:(BMKMapView *)view viewForAnnotation:(id <BMKAnnotation>)annotation {
-    
-    // 生成重用标示identifier
-    NSString *AnnotationViewID = @"xidanMark";
-    
-    // 检查是否有重用的缓存
-    BMKAnnotationView* annotationView = [view dequeueReusableAnnotationViewWithIdentifier:AnnotationViewID];
-    // 缓存没有命中，自己构造一个，一般首次添加annotation代码会运行到此处
-    if (annotationView == nil) {
-        annotationView = [[MapAnnotations alloc] initWithAnnotation:annotation reuseIdentifier:AnnotationViewID];
-        ((MapAnnotations*)annotationView).pinColor = BMKPinAnnotationColorRed;
-        // 设置重天上掉下的效果(annotation)
-        ((MapAnnotations*)annotationView).animatesDrop = YES;
-        
-    }
-    
-    if ([self.SearchType isEqualToString:@"factoryName"]) {
-        
-        for (FactoryDataModel *model in self.storeArray) {
-            
-            if ([model.factoryLongitude floatValue] == annotation.coordinate.longitude && [model.factoryLatitude floatValue] == annotation.coordinate.latitude) {
-                ((MapAnnotations*)annotationView).storeID = model.factoryId;// 不懂这个什么意思 就看 storeID的注释
-           //     NSLog(@"不懂这个什么意思 就看 storeID的注释%@", model.factoryId);
-            }
-        }
-    }else {
-    
-        for (MapSearchStoreModel *model in self.storeArray) {
-            if ([model.storeLongitude floatValue] == annotation.coordinate.longitude && [model.storeLatitude    floatValue] == annotation.coordinate.latitude) {
-                ((MapAnnotations*)annotationView).storeID = model.storeId;
-            }
-        }
-    }
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
-    [annotationView addGestureRecognizer:tap];
-    
-    // 设置是否可以拖拽
-    annotationView.draggable = NO;
-    annotationView.annotation = annotation;
-    // 单击弹出泡泡，弹出泡泡前提annotation必须实现title属性
-    annotationView.canShowCallout = YES;
-    annotationView.userInteractionEnabled = YES;
-    return annotationView;
 }
 
 - (void)handleTap:(UITapGestureRecognizer *)tap {
     
-    MapAnnotations *VC = (MapAnnotations*)tap.view;
+    gaodeMapPinAnnotationView *VC = (gaodeMapPinAnnotationView*)tap.view;
+    
+    if ([VC.annotation.subtitle isEqualToString:@"我的位置"]) {
+        return;
+    }
     
     if ([self.SearchType isEqualToString:@"factoryName"]) {
-    
+        
         FactoryDataModel *factoryModel;
         for (FactoryDataModel *model in self.sellerDataArray) {
             NSLog(@"model.factoryId%@ VC.storeID%@", model.factoryId, VC.storeID);
@@ -707,32 +675,7 @@ _backgroundView.alpha = 0;
 }
 
 - (void)navigationTap:(MapPopUpPaopaoView *)view {
-//    AMapNaviCompositeUserConfig *config = [[AMapNaviCompositeUserConfig alloc] init];
-//    //传入终点坐标
-//    [config setRoutePlanPOIType:AMapNaviRoutePlanPOITypeEnd location:[AMapNaviPoint locationWithLatitude:39.918058 longitude:116.397026] name:@"故宫" POIId:nil];
-//    //启动
-//    [self.compositeManager presentRoutePlanViewControllerWithOptions:config];
-//    //节点数组
-//    NSMutableArray *nodesArray = [[NSMutableArray alloc] initWithCapacity:2];
-//    //起点
-//    BNRoutePlanNode *startNode = [[BNRoutePlanNode alloc] init];
-//    startNode.pos = [[BNPosition alloc] init];
-//    NSLog(@"起点%f,%f", Position.longitude, Position.latitude);
-//    startNode.pos.x = Position.longitude;
-//    startNode.pos.y = Position.latitude;
-//    startNode.pos.eType = BNCoordinate_BaiduMapSDK;
-//    [nodesArray addObject:startNode];
-//    //终点
-//    BNRoutePlanNode *endNode = [[BNRoutePlanNode alloc] init];
-//    endNode.pos = [[BNPosition alloc] init];
-//    NSLog(@"终点%f,%f", view.storePosition.longitude, view.storePosition.latitude);
-//    endNode.pos.x = view.storePosition.longitude;
-//    endNode.pos.y = view.storePosition.latitude;
-//    endNode.pos.eType = BNCoordinate_BaiduMapSDK;
-//    [nodesArray addObject:endNode];
-//    //发起路径规划
-//    [BNCoreServices_RoutePlan setDisableOpenUrl:YES];
-//  [BNCoreServices_RoutePlan startNaviRoutePlan:BNRoutePlanMode_Recommend naviNodes:nodesArray time:nil delegete:self userInfo:nil];
+
 }
 /**
  *进入商店
@@ -743,19 +686,17 @@ _backgroundView.alpha = 0;
     VC.storeStr = view.storeID;
     [self.navigationController pushViewController:VC animated:YES];
 }
-#pragma mark  CityListViewControllerDelegate 跳转到对应的城市
+#pragma mark  CityListViewControllerDelegate 跳转到对应的城市 --把该城市设为中心店
 - (void)didClickedWithCityName:(RecentSearchCity*)cityName {
-    
-    BMKCoordinateRegion region;
-    region.center.latitude = cityName.latitude.floatValue;
-    region.center.longitude = cityName.longitude.floatValue;
-    region.span.latitudeDelta = 0.25;
-    region.span.longitudeDelta = 0.25;
-  //  Position = region.center;
-    _mapView.region = region;
+    CLLocationCoordinate2D centerCoordinate;
+    centerCoordinate.latitude = cityName.latitude.floatValue;
+    centerCoordinate.longitude = cityName.longitude.floatValue;
+    _mapView.centerCoordinate = centerCoordinate;
     self.citySelectionView.citySearchLabel.text = cityName.provinceName;
-    NSLog(@"didClickedWithCityName%@ self.citySelectionView.citySearchLabel.text%@", cityName.provinceName, self.citySelectionView.citySearchLabel.text);
-    [self CityInformation: region.center];
+
+    [self.mapView setCenterCoordinate:centerCoordinate animated:YES];
+    //搜索附近的商家
+    [self CityInformation:centerCoordinate];
 }
 
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
@@ -763,7 +704,7 @@ _backgroundView.alpha = 0;
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-  //  NSLog(@"CityInformationresponseObject%@", self.storeArray);
+    //  NSLog(@"CityInformationresponseObject%@", self.storeArray);
     return self.storeArray.count;
 }
 
@@ -780,7 +721,7 @@ _backgroundView.alpha = 0;
         MapStoreShowTVCell *cell = [tableView dequeueReusableCellWithIdentifier:@"MapStoreShowTVCell" forIndexPath:indexPath];
         cell.delegate = self;
         cell.EnterBtn.tag = indexPath.row;
-    //    NSLog(@"self.storeArray%@ indexPath.row%d", self.storeArray,indexPath.row);
+        //    NSLog(@"self.storeArray%@ indexPath.row%d", self.storeArray,indexPath.row);
         cell.model = self.storeArray[indexPath.row];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         return cell;
@@ -796,9 +737,9 @@ _backgroundView.alpha = 0;
 }
 
 -(void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath {
-
-
-
+    
+    
+    
 }
 #pragma mark  SearchVendorTVCell 厂家展示cell代理
 /**
@@ -833,15 +774,46 @@ _backgroundView.alpha = 0;
     [VC setHidesBottomBarWhenPushed:YES];
     VC.storeStr = model.storeId;
     [self.navigationController pushViewController:VC animated:YES];
-
+    
 }
 
 //导航点击事件
 - (void)handleMapNavigationCC:(CLLocationCoordinate2D)CC {
+    AMapNaviCompositeUserConfig *config = [[AMapNaviCompositeUserConfig alloc] init];
+    [config setRoutePlanPOIType:AMapNaviRoutePlanPOITypeEnd location:[AMapNaviPoint locationWithLatitude:CC.latitude longitude:CC.longitude] name:@"目的地" POIId:nil];  //传入终点
+    [self.compositeManager presentRoutePlanViewControllerWithOptions:config];
+}
+#pragma mark - AMapNaviCompositeManagerDelegate
 
-    
+// 发生错误时,会调用代理的此方法
+- (void)compositeManager:(AMapNaviCompositeManager *)compositeManager error:(NSError *)error {
+    NSLog(@"error:{%ld - %@}", (long)error.code, error.localizedDescription);
 }
 
+// 算路成功后的回调函数,路径规划页面的算路、导航页面的重算等成功后均会调用此方法
+- (void)compositeManagerOnCalculateRouteSuccess:(AMapNaviCompositeManager *)compositeManager {
+    NSLog(@"onCalculateRouteSuccess,%ld",(long)compositeManager.naviRouteID);
+}
+
+// 算路失败后的回调函数,路径规划页面的算路、导航页面的重算等失败后均会调用此方法
+- (void)compositeManager:(AMapNaviCompositeManager *)compositeManager onCalculateRouteFailure:(NSError *)error {
+    NSLog(@"onCalculateRouteFailure error:{%ld - %@}", (long)error.code, error.localizedDescription);
+}
+
+// 开始导航的回调函数
+- (void)compositeManager:(AMapNaviCompositeManager *)compositeManager didStartNavi:(AMapNaviMode)naviMode {
+    NSLog(@"didStartNavi,%ld",(long)naviMode);
+}
+
+// 当前位置更新回调
+- (void)compositeManager:(AMapNaviCompositeManager *)compositeManager updateNaviLocation:(AMapNaviLocation *)naviLocation {
+    NSLog(@"updateNaviLocation,%@",naviLocation);
+}
+
+// 导航到达目的地后的回调函数
+- (void)compositeManager:(AMapNaviCompositeManager *)compositeManager didArrivedDestination:(AMapNaviMode)naviMode {
+    NSLog(@"didArrivedDestination,%ld",(long)naviMode);
+}
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView{
     
     CGFloat contentY = scrollView.contentOffset.y;
@@ -866,7 +838,7 @@ _backgroundView.alpha = 0;
     UIView *view = [[UIView alloc] init];
     view.backgroundColor = [UIColor whiteColor];
     view.frame = CGRectMake(0, 0, kScreen_widht, 39);
-
+    
     UIButton *iconBtn = [UIButton buttonWithType:(UIButtonTypeCustom)];
     iconBtn.frame = CGRectMake(0, 0, kScreen_widht, 38);
     iconBtn.backgroundColor = [UIColor whiteColor];
@@ -885,17 +857,8 @@ _backgroundView.alpha = 0;
     return 39;
 }
 
--(void)mapView:(BMKMapView *)mapView didSelectAnnotationView:(BMKAnnotationView *)view {
-    MapAnnotations *mapAnnotations = view.annotation;
-    
-}
-- (void)mapView:(BMKMapView *)mapView onClickedMapPoi:(BMKMapPoi*)mapPoi {
-
-
-}
-
 - (BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController {
-
+    
     if ([UserDataSingleton mainSingleton].userID.length == 0) {
         return NO;
     }else {
@@ -905,3 +868,4 @@ _backgroundView.alpha = 0;
 }
 
 @end
+

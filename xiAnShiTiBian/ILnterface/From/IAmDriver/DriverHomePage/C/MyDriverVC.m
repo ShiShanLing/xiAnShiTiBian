@@ -15,10 +15,11 @@
 #import "DriverNearOrdersVC.h"
 #import "CallCarOderDetailsVC.h"
 
-
+#define DefaultLocationTimeout  6
+#define DefaultReGeocodeTimeout 3
 static CLLocationCoordinate2D location2D;
 static BOOL AllowPositioning;
-@interface MyDriverVC ()<UITableViewDelegate, UITableViewDataSource, DriverStateTVCellDelegate, CallcarOrderTVCellDelegate>
+@interface MyDriverVC ()<UITableViewDelegate, UITableViewDataSource, DriverStateTVCellDelegate, CallcarOrderTVCellDelegate,AMapLocationManagerDelegate>
 
 /**
  *司机资料model
@@ -36,6 +37,9 @@ static BOOL AllowPositioning;
  *
  */
 @property (nonatomic, strong)UITableView *tableView;
+//定位
+@property (nonatomic, strong) AMapLocationManager *locationManager;
+
 @end
 
 @implementation MyDriverVC
@@ -62,35 +66,21 @@ static BOOL AllowPositioning;
     return _tableView;
 }
 - (void)viewWillDisappear:(BOOL)animated {
-    [_mapView viewWillDisappear];
-    _mapView.delegate = nil; // 不用时，置nil
-    _locService.delegate = nil;
+    [super viewWillDisappear:animated];
+
     [self performSelector:@selector(delayMethod)];
 
 }
 - (void)viewWillAppear:(BOOL)animated {
-    [_mapView viewWillAppear];
-    AllowPositioning = YES;
-    _mapView.delegate = self; // 此处记得不用的时候需要置nil，否则影响内存的释放
-    //定位方法
-    _locService.delegate = self;
-    _mapView.showsUserLocation = NO;//先关闭显示的定位图层
-    _mapView.userTrackingMode = BMKUserTrackingModeNone;//设置定位的状态
-    _mapView.showsUserLocation = YES;//显示定位图层
+    [super viewWillAppear:animated];
     [super.navigationController setNavigationBarHidden:NO];
     [self requestDriverData];
+    [self configLocationManager];
    
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    _mapView = [[BMKMapView alloc] init];
-    _mapView.showMapScaleBar = YES;
-    [_mapView setMapType:BMKMapTypeStandard];
-    _locService = [[BMKLocationService alloc]init];
-    [_locService startUserLocationService];
-    
-    [self.view addSubview:_mapView];
     
     self.navigationItem.title = @"我是司机";
     UIImage *returnimage = [UIImage imageNamed:@"return_black"];
@@ -100,6 +90,59 @@ static BOOL AllowPositioning;
     self.view.backgroundColor = MColor(238, 238, 238);
     [self createTableView];
 }
+
+- (void)configLocationManager {
+    self.locationManager = [[AMapLocationManager alloc] init];
+    
+    [self.locationManager setDelegate:self];
+    
+    //设置期望定位精度
+    [self.locationManager setDesiredAccuracy:kCLLocationAccuracyHundredMeters];
+    
+    //设置不允许系统暂停定位
+    [self.locationManager setPausesLocationUpdatesAutomatically:NO];
+    
+    //设置允许在后台定位
+    [self.locationManager setAllowsBackgroundLocationUpdates:YES];
+    
+    //设置定位超时时间
+    [self.locationManager setLocationTimeout:DefaultLocationTimeout];
+    
+    //设置逆地理超时时间
+    [self.locationManager setReGeocodeTimeout:DefaultReGeocodeTimeout];
+    
+    //设置开启虚拟定位风险监测，可以根据需要开启
+    [self.locationManager setDetectRiskOfFakeLocation:NO];
+
+    //进行单次带逆地理定位请求
+    [self.locationManager requestLocationWithReGeocode:YES completionBlock:^(CLLocation *location, AMapLocationReGeocode *regeocode, NSError *error) {
+        if (error != nil && error.code == AMapLocationErrorLocateFailed)
+        {
+            //定位错误：此时location和regeocode没有返回值，不进行annotation的添加
+            NSLog(@"定位错误:{%ld - %@};", (long)error.code, error.localizedDescription);
+            return;
+        }else if (error != nil
+                  && (error.code == AMapLocationErrorReGeocodeFailed
+                      || error.code == AMapLocationErrorTimeOut
+                      || error.code == AMapLocationErrorCannotFindHost
+                      || error.code == AMapLocationErrorBadURL
+                      || error.code == AMapLocationErrorNotConnectedToInternet
+                      || error.code == AMapLocationErrorCannotConnectToHost))
+        {
+            //逆地理错误：在带逆地理的单次定位中，逆地理过程可能发生错误，此时location有返回值，regeocode无返回值，进行annotation的添加
+            NSLog(@"逆地理错误:{%ld - %@};", (long)error.code, error.localizedDescription);
+        }else if (error != nil && error.code == AMapLocationErrorRiskOfFakeLocation){
+            //存在虚拟定位的风险：此时location和regeocode没有返回值，不进行annotation的添加
+            NSLog(@"存在虚拟定位的风险:{%ld - %@};", (long)error.code, error.localizedDescription);
+            return;
+        }else{
+            [self requestNearCarOrderData:location.coordinate];
+        }
+    }];
+    
+    
+}
+
 /**
  *请求司机数据
  */
@@ -143,6 +186,10 @@ static BOOL AllowPositioning;
     self.driverDataModel = driverModel;
     [self.tableView reloadData];
 }
+
+
+
+
 /**
  *请求附近叫车订单
  */
@@ -399,7 +446,7 @@ static BOOL AllowPositioning;
 - (void)handleCheckOrderBtn {
     CallCarOderDetailsVC *VC = [[CallCarOderDetailsVC alloc] init];
     VC.carOwnerId = self.driverDataModel.carOwnerId;
-    //NSLog(@"handleCheckOrderBtn%@", self.driverDataModel.carOwnerId);
+    NSLog(@"handleCheckOrderBtn%@", self.driverDataModel.carOwnerId);
     VC.location2D = location2D;
     VC.stateIndex = 1;
     [self.navigationController pushViewController:VC animated:YES];
@@ -437,59 +484,6 @@ static BOOL AllowPositioning;
 }
 
 
-#pragma mark --- 百度地图定位的方法
-
-/**
- *在地图View将要启动定位时，会调用此函数
- *@param mapView 地图View
- */
-- (void)willStartLocatingUser
-{
-    NSLog(@"start locate");
-}
-
-
-
-/**
- *用户位置更新后，会调用此函数
- *@param userLocation 新的用户位置
- */
-- (void)didUpdateBMKUserLocation:(BMKUserLocation *)userLocation {
-    NSLog(@"didUpdateUserLocation lat %f,long %f",userLocation.location.coordinate.latitude,userLocation.location.coordinate.longitude);
-    [_mapView updateLocationData:userLocation];
-    
-    if (AllowPositioning) {
-        location2D = userLocation.location.coordinate;
-    [self requestNearCarOrderData:userLocation.location.coordinate];
-        AllowPositioning = NO;
-    }
-}
-
-/**
- *在地图View停止定位后，会调用此函数
- *@param mapView 地图View
- */
-- (void)didStopLocatingUser
-{
-    NSLog(@"stop locate");
-}
-
-/**
- *定位失败后，会调用此函数
- *@param mapView 地图View
- *@param error 错误号，参考CLError.h中定义的错误号
- */
-- (void)didFailToLocateUserWithError:(NSError *)error
-{
-    NSLog(@"location error");
-}
-
-
-- (void)dealloc {
-    if (_mapView) {
-        _mapView = nil;
-    }
-}
 
 
 

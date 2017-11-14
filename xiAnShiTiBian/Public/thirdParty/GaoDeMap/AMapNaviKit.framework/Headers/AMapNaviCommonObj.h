@@ -203,15 +203,14 @@ typedef NS_ENUM(NSInteger, AMapNaviRouteStatus)
     AMapNaviRouteStatusSeriousJam,                  ///< 4 严重阻塞
 };
 
-///路径规划时POI点的起终点类型
+//路径规划时POI点的起终点类型
 typedef NS_ENUM(NSInteger, AMapNaviRoutePlanPOIType)
 {
     AMapNaviRoutePlanPOITypeStart = 0,              ///< 0 起点
     AMapNaviRoutePlanPOITypeEnd,                    ///< 1 终点
     AMapNaviRoutePlanPOITypeWay,                    ///< 2 途径点
 };
-
-///可切换到的平行路类型 since 5.3.0
+//可切换到的平行路类型 since 5.3.0
 typedef NS_ENUM(NSInteger, AMapNaviParallelRoadStatusFlag)
 {
     AMapNaviParallelRoadStatusFlagNone = 0,         ///< 0 无主辅路可切换

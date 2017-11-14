@@ -23,4 +23,7 @@
 @property (nonatomic, weak)id<MapStoreShowTVCellDelegate>delegate;
 
 @property (weak, nonatomic) IBOutlet UIButton *EnterBtn;
+
+
+
 @end

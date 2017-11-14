@@ -8,7 +8,7 @@
 
 #import "RegisteredEnteringVC.h"
 #import "InputView.h" //输入框view
-@interface RegisteredEnteringVC ()<UIScrollViewDelegate, UITextFieldDelegate, BMKMapViewDelegate,BMKLocationServiceDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate,DPImagePickerDelegate>
+@interface RegisteredEnteringVC ()<UIScrollViewDelegate, UITextFieldDelegate,  UIImagePickerControllerDelegate, UINavigationControllerDelegate,DPImagePickerDelegate>
 
 @property (nonatomic, strong)UIScrollView *scrollView;
 /**
@@ -45,15 +45,6 @@
  *提交按钮
  */
 @property (nonatomic, strong)UIButton *submitButton;
-/**
- *基本地图
- */
-@property (nonatomic, strong)BMKMapView* mapView;
-/**
- *定位
- */
-@property (nonatomic, strong)BMKLocationService* locService;
-
 
 @property (nonatomic, strong)UIImagePickerController *picker;
 

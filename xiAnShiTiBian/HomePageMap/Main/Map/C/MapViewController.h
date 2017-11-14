@@ -7,11 +7,6 @@
 //
 
 #import "BaseViewController.h"
-#import <BaiduMapAPI_Cloud/BMKCloudSearchComponent.h>
-#import <BaiduMapAPI_Location/BMKLocationComponent.h>
-#import <BaiduMapAPI_Utils/BMKUtilsComponent.h>
-#import <BaiduMapAPI_Map/BMKMapComponent.h>
-#import <BaiduMapAPI_Search/BMKSearchComponent.h>
 
 @interface MapViewController : BaseViewController
 

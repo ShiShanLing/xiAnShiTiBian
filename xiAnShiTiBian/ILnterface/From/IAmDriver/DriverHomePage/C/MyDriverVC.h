@@ -11,9 +11,8 @@
 /**
  *我的老司机界面
  */
-@interface MyDriverVC : BaseViewController <BMKMapViewDelegate,BMKLocationServiceDelegate> {
- BMKMapView* _mapView;
- BMKLocationService* _locService;
+@interface MyDriverVC : BaseViewController  {
+
 
 }
 

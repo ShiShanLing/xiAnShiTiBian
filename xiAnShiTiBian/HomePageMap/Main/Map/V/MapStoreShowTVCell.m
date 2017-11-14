@@ -39,10 +39,9 @@ OrderBtn *storeBtn;
     CLLocationCoordinate2D Position;
     Position.longitude = _model.storeLongitude.floatValue;
     Position.latitude = _model.storeLatitude.floatValue;
-    if ([_delegate respondsToSelector:@selector(handleMapNavigationCC:)]) {
-        [_delegate handleMapNavigationCC:Position];
+    if ([self.delegate respondsToSelector:@selector(handleMapNavigationCC:)]) {
+        [self.delegate handleMapNavigationCC:Position];
     }
-    
 }
 
 - (instancetype)initWithCoder:(NSCoder *)aDecoder {

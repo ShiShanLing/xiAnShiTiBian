@@ -13,16 +13,23 @@
 #import "DriverHRDTVCell.h"     //历史订单状态显示cell
 #import "NoAcceptOrderTVCell.h" //未被司机接收的订单
 #import "MyDriverVC.h"
-@interface CallCarOderDetailsVC ()<UITableViewDelegate, UITableViewDataSource, DriverTheROTVCellDelegate>
+@interface CallCarOderDetailsVC ()<UITableViewDelegate, UITableViewDataSource, DriverTheROTVCellDelegate,AMapNaviCompositeManagerDelegate>
 
 @property (nonatomic, strong)UITableView *tableView;
 
 @property (nonatomic, strong)NSMutableArray *orderArray;
 
+@property (nonatomic, strong) AMapNaviCompositeManager *compositeManager;
 @end
 
 @implementation CallCarOderDetailsVC
-
+- (AMapNaviCompositeManager *)compositeManager {
+    if (!_compositeManager) {
+        _compositeManager = [[AMapNaviCompositeManager alloc] init];  // 初始化
+        _compositeManager.delegate = self;  // 如果需要使用AMapNaviCompositeManagerDelegate的相关回调（如自定义语音、获取实时位置等），需要设置delegate
+    }
+    return _compositeManager;
+}
 - (NSMutableArray *)orderArray {
     if (!_orderArray) {
         _orderArray = [NSMutableArray array];
@@ -83,6 +90,7 @@
         URL_Str = [NSString stringWithFormat:@"%@/cartask/api/findCarTasksById", kSHY_100];
         URL_DIC[@"carTaskId"] = self.dricerOrderId;
     }
+    
     NSLog(@"URL_DIC%@ ---URL_Str%@",URL_DIC , URL_Str);
     AFHTTPSessionManager *session = [AFHTTPSessionManager manager];
     __block CallCarOderDetailsVC *VC = self;
@@ -93,7 +101,8 @@
         
         NSString *resultStr = [NSString stringWithFormat:@"%@",responseObject[@"result"]];
         if ([resultStr isEqualToString:@"1"]) {
-            [VC parsingNearCarOrderData:responseObject[@"data"]];
+            
+            [VC parsingNearCarOrderData:responseObject];
         }else {
             [VC showAlert:@"获取失败,请重试!"];
         }
@@ -105,11 +114,14 @@
 /**
  *解析正在进行的订单n
  */
-- (void)parsingNearCarOrderData:(NSArray *)orderArr {
-    
+- (void)parsingNearCarOrderData:(NSDictionary *)orderDIc {
+    NSArray *orderArr = orderDIc[@"data"];
     [self.orderArray removeAllObjects];
+    if (orderArr.count == 0) {
+        [self showAlert:orderDIc[@"msg"] time:1.0];
+        return;
+    }
     for (NSDictionary *orderDic in orderArr) {
-        
         
         NSEntityDescription *des = [NSEntityDescription entityForName:@"DriverCarOrderDetailsModel" inManagedObjectContext:self.managedContext];
         //根据描述 创建实体对象
@@ -266,65 +278,33 @@
  */
 - (void)navigation:(UIButton *)sender {
     
-//    DriverCarOrderDetailsModel *model = self.orderArray[0];
-//
-//
-//    UIAlertController *alertV = [UIAlertController alertControllerWithTitle:@"帮助!" message:@"请选择您的目的地!" preferredStyle:UIAlertControllerStyleAlert];
-//    UIAlertAction *cancle = [UIAlertAction actionWithTitle:@"到商家" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-//        //节点数组
-//        NSMutableArray *nodesArray = [[NSMutableArray alloc] initWithCapacity:2];
-//        //起点
-//        BNRoutePlanNode *startNode = [[BNRoutePlanNode alloc] init];
-//        startNode.pos = [[BNPosition alloc] init];
-//        NSLog(@"起点%f,%f", self.location2D.longitude, self.location2D.latitude);
-//        startNode.pos.x = self.location2D.longitude;
-//        startNode.pos.y = self.location2D.latitude;
-//        startNode.pos.eType = BNCoordinate_BaiduMapSDK;
-//        [nodesArray addObject:startNode];
-//        //终点
-//        BNRoutePlanNode *endNode = [[BNRoutePlanNode alloc] init];
-//        endNode.pos = [[BNPosition alloc] init];
-//        NSLog(@"终点%f,%f",model.store_longitude.floatValue, model.store_latitude.floatValue);
-//        endNode.pos.x = model.store_longitude.floatValue;
-//        endNode.pos.y = model.store_latitude.floatValue;
-//        endNode.pos.eType = BNCoordinate_BaiduMapSDK;
-//        [nodesArray addObject:endNode];
-//        //发起路径规划
-//        [BNCoreServices_RoutePlan setDisableOpenUrl:YES];
-//        [BNCoreServices_RoutePlan startNaviRoutePlan:BNRoutePlanMode_Recommend naviNodes:nodesArray time:nil delegete:self    userInfo:nil];
-//    }];
-//
-//    UIAlertAction *confirm = [UIAlertAction actionWithTitle:@"到买家" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-//        //节点数组
-//        NSMutableArray *nodesArray = [[NSMutableArray alloc] initWithCapacity:2];
-//        //起点
-//        BNRoutePlanNode *startNode = [[BNRoutePlanNode alloc] init];
-//        startNode.pos = [[BNPosition alloc] init];
-//        NSLog(@"起点%f,%f", self.location2D.longitude, self.location2D.latitude);
-//        startNode.pos.x = self.location2D.longitude;
-//        startNode.pos.y = self.location2D.latitude;
-//        startNode.pos.eType = BNCoordinate_BaiduMapSDK;
-//        [nodesArray addObject:startNode];
-//        //终点
-//        BNRoutePlanNode *endNode = [[BNRoutePlanNode alloc] init];
-//        endNode.pos = [[BNPosition alloc] init];
-//        NSLog(@"终点%f,%f",model.buyer_longitude.floatValue, model.buyer_latitude.floatValue);
-//        endNode.pos.x = model.buyer_longitude.floatValue;
-//        endNode.pos.y = model.buyer_latitude.floatValue;
-//        endNode.pos.eType = BNCoordinate_BaiduMapSDK;
-//        [nodesArray addObject:endNode];
-//        //发起路径规划
-//        [BNCoreServices_RoutePlan setDisableOpenUrl:YES];
-//        [BNCoreServices_RoutePlan startNaviRoutePlan:BNRoutePlanMode_Recommend naviNodes:nodesArray time:nil delegete:self    userInfo:nil];
-//    }];
-//    // 3.将“取消”和“确定”按钮加入到弹框控制器中
-//    [alertV addAction:cancle];
-//    [alertV addAction:confirm];
-//    // 4.控制器 展示弹框控件，完成时不做操作
-//    [self presentViewController:alertV animated:YES completion:^{
-//        nil;
-//    }];
+    DriverCarOrderDetailsModel *model = self.orderArray[0];
 
+    UIAlertController *alertV = [UIAlertController alertControllerWithTitle:@"帮助!" message:@"请选择您的目的地!" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancle = [UIAlertAction actionWithTitle:@"到商家" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        AMapNaviCompositeUserConfig *config = [[AMapNaviCompositeUserConfig alloc] init];
+        CLLocationCoordinate2D CC;
+        CC.longitude =  model.store_longitude.floatValue;
+        CC.latitude = model.store_latitude.floatValue;
+        [config setRoutePlanPOIType:AMapNaviRoutePlanPOITypeEnd location:[AMapNaviPoint locationWithLatitude:CC.latitude longitude:CC.longitude] name:@"目的地" POIId:nil];  //传入终点
+        [self.compositeManager presentRoutePlanViewControllerWithOptions:config];
+    }];
+    
+    UIAlertAction *confirm = [UIAlertAction actionWithTitle:@"到买家" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        AMapNaviCompositeUserConfig *config = [[AMapNaviCompositeUserConfig alloc] init];
+        CLLocationCoordinate2D CC;
+        CC.longitude = model.buyer_longitude.floatValue;
+        CC.latitude = model.buyer_latitude.floatValue;
+        [config setRoutePlanPOIType:AMapNaviRoutePlanPOITypeEnd location:[AMapNaviPoint locationWithLatitude:CC.latitude longitude:CC.longitude] name:@"目的地" POIId:nil];  //传入终点
+        [self.compositeManager presentRoutePlanViewControllerWithOptions:config];
+    }];
+    // 3.将“取消”和“确定”按钮加入到弹框控制器中
+    [alertV addAction:cancle];
+    [alertV addAction:confirm];
+    // 4.控制器 展示弹框控件，完成时不做操作
+    [self presentViewController:alertV animated:YES completion:^{
+        nil;
+    }];
 }
 /**
  *确认送达
@@ -333,6 +313,7 @@
 
     [self performSelector:@selector(indeterminateExample)];
     NSString *URL_Str = [NSString stringWithFormat:@"%@/cartask/api/confirmDelivered", kSHY_100];
+    
     NSMutableDictionary *URL_Dic = [NSMutableDictionary dictionary];
     DriverCarOrderDetailsModel *model = self.orderArray[0];
     URL_Dic[@"carTaskId"] = model.carTaskId;
